@@ -1,0 +1,22 @@
+<!doctype html><html lang="ru"><meta charset="utf-8"><title>AI Sana — проверки</title><style>body{font:15px monospace;padding:35px;background:#f5f8f2}li{padding:8px}.pass{color:#176b52}.fail{color:#b22}</style><h1>Проверки доменной логики</h1><p id="summary"></p><ol id="results"></ol><script src="domain.js"></script><script src="data.js"></script><script>
+let passed=0,failed=0;function test(name,fn){const li=document.createElement('li');try{fn();li.textContent='PASS '+name;li.className='pass';passed++;}catch(e){li.textContent='FAIL '+name+': '+e.message;li.className='fail';failed++;}document.querySelector('#results').append(li);}function eq(a,b){if(JSON.stringify(a)!==JSON.stringify(b))throw Error(JSON.stringify(a)+' !== '+JSON.stringify(b));}
+const seed=makeSeed();test('Минимальные наборы данных',()=>['drafts','tasks','teams','proposals'].forEach(k=>eq(seed[k].length,5)));
+test('Сумма весов 100',()=>eq(Hub.groups.reduce((s,g)=>s+g.weight,0),100));
+test('Неподтверждённые поля не дают баллы',()=>eq(Hub.score({...seed.tasks[0],confirmed:[]}),0));
+test('Полная подтверждённая задача — 100',()=>eq(Hub.score(seed.tasks[0]),100));
+test('Контекст без потребности — 0',()=>eq(Hub.score(Hub.confirm({context:'Есть проблема'})),0));
+test('Контакт без формата связи — 0',()=>eq(Hub.score(Hub.confirm({contact:'test@example.com'})),0));
+test('Границы уровней',()=>eq([0,39,40,69,70,89,90,100].map(Hub.level),['Черновик','Черновик','Рабочая','Рабочая','Готовая','Готовая','Приоритетная','Приоритетная']));
+test('Редактирование и повторное подтверждение пересчитывают баллы',()=>eq(Hub.score(Hub.confirm({...seed.tasks[0],data:''})),80));
+test('Минимум 3 вопроса для полной карточки',()=>eq(Hub.assistant(seed.tasks[0]).questions.length,3));
+test('Неполная карточка получает вопросы по пропускам',()=>{const out=Hub.assistant({context:'Кафе',topic:'Ритейл'});eq(out.questions.some(q=>q.field==='data'),true);eq(out.questions.some(q=>q.field==='context'),false);});
+test('Неверный JSON обрабатывается',()=>eq(Hub.assistant({},'oops').fallback,true));
+test('Неверная схема обрабатывается',()=>eq(Hub.assistant({},{questions:[{field:'unknown',question:'?'}]}).fallback,true));
+test('Дубли вопросов обрабатываются',()=>eq(Hub.assistant({},{questions:Array(3).fill({field:'data',question:'Какие данные?'})}).fallback,true));
+test('Опасные ссылки отклоняются',()=>eq(Hub.safeUrl('javascript:alert(1)'),null));
+test('HTTPS ссылка принимается',()=>eq(Hub.safeUrl('https://example.com'),'https://example.com/'));
+test('Баллы только за выбранную команду',()=>{let rejected=false;try{Hub.approveProgress(seed.proposals[0],'Прототип проверен');}catch{rejected=true;}eq(rejected,true);});
+test('Принятый этап приносит 50 баллов без повторного начисления',()=>{const p=Hub.approveProgress({...seed.proposals[0],status:'selected'},'Проверен прототип');eq(p.points,50);let rejected=false;try{Hub.approveProgress(p,'Ещё раз');}catch{rejected=true;}eq(rejected,true);});
+test('В наборе есть задача с низким рейтингом, доступная в каталоге',()=>eq(seed.tasks.some(t=>t.published&&Hub.score(t)<40),true));
+document.querySelector('#summary').textContent=passed+' пройдено, '+failed+' ошибок';document.title=failed?'FAIL':'PASS '+passed;
+</script></html>
