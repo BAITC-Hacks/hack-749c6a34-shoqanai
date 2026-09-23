@@ -12,7 +12,7 @@ input, textarea, select { font-size: 16px; }
 main:focus { outline: none; }
 .skip-link {
   position: fixed; left: 16px; top: 12px; z-index: 100;
-  padding: 14px 20px; background: white; border: 2px solid var(--green);
+  padding: 14px 20px; background: white; color: var(--green); border: 2px solid var(--green);
   border-radius: 8px; transform: translateY(-180%);
 }
 .skip-link:focus { transform: translateY(0); }
@@ -28,7 +28,7 @@ main:focus { outline: none; }
 .topbar { min-height: 84px; height: auto; padding: 14px var(--page-gutter); gap: 16px; flex-wrap: wrap; }
 .role-switch { flex-shrink: 0; }
 .role-switch button { min-height: 44px; color: #5e7064; font-size: 13px; }
-.role-switch button.active { color: white; }
+.role-switch button.active { color: var(--green); background: white; }
 .content { width: 100%; padding: 32px var(--page-gutter); }
 .heading-row { flex-wrap: wrap; }
 .heading-row > div { flex: 1 1 300px; }
