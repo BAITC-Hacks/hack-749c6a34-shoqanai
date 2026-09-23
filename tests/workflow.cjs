@@ -2,7 +2,7 @@
 // Application-handler integration tests with a simulated DOM, not browser layout tests.
 const fs = require('node:fs');
 const vm = require('node:vm');
-const code = ['domain.js', 'data.js', 'app.js'].map(file => fs.readFileSync(__dirname + '/../' + file, 'utf8')).join('\n');
+const code = ['domain.js', 'data.js', 'ai-client.js', 'app.js'].map(file => fs.readFileSync(__dirname + '/../' + file, 'utf8')).join('\n');
 const store = {};
 let nextId = 0;
 function assert(value, message) { if (!value) throw Error(message); }
@@ -32,7 +32,7 @@ function boot(failStorage = false) {
   });
   vm.runInContext(code, context);
   return {
-    node, classes,
+    node, classes, context,
     click(action, extra={}) {handlers.click({target:{closest:()=>Object.assign(node('clicked'),{dataset:{action,...extra}})}});},
     input(v) {values=v;handlers.input({target:{id:'field',closest:()=>node('form')}});},
     search(value) {handlers.input({target:{id:'search',value,closest:()=>null}});},
@@ -122,3 +122,28 @@ app = boot(true);
 app.click('new');app.input({draft:'Черновик при недоступном хранилище'});
 assert(app.node('draft-save-status').textContent.includes('Не удалось сохранить'),'Storage failure is shown honestly');
 console.log('PASS: autosave, reload, publication, favorites, search, menu, workflow, filter chips, comparison guards, manual selection, status filters, team switching, storage failure.');
+async function testChat() {
+  app = boot();
+  app.context.SanaAI = {ask:async()=>({source:'openai',message:'Совет <script>test</script>',questions:[]})};
+  app.click('nav',{page:'assistant'});
+  app.submit('assistant-form',{message:'Помоги сформулировать метрику'});
+  await new Promise(resolve=>setTimeout(resolve,0));
+  assert(app.node('app').innerHTML.includes('Совет &lt;script&gt;test&lt;/script&gt;'),'AI answer is rendered as escaped text');
+  app.context.SanaAI.ask = async()=>{throw Error('API недоступен');};
+  app.submit('assistant-form',{message:'Повторный вопрос'});
+  await new Promise(resolve=>setTimeout(resolve,0));
+  assert(app.node('app').innerHTML.includes('API недоступен'),'Chat displays provider failure');
+  assert(app.node('app').innerHTML.includes('>Повторный вопрос</textarea>'),'Failed question is restored');
+  app.click('new');app.input({draft:'Задача до изменения',topic:'Ритейл'});
+  app.context.fetch=()=>{};
+  let resolveAnswer;
+  app.context.SanaAI.ask=()=>new Promise(resolve=>resolveAnswer=resolve);
+  app.click('analyze');
+  app.input({draft:'Изменённая задача после отправки',topic:'Ритейл'});
+  resolveAnswer({source:'openai',message:'Устаревший ответ',questions:[]});
+  await new Promise(resolve=>setTimeout(resolve,0));
+  assert(!app.node('app').innerHTML.includes('Устаревший ответ'),'Stale AI response does not overwrite an edited task');
+  console.log('PASS: chat response escaping, error recovery, stale analysis protection.');
+}
+testChat();
+

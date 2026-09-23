@@ -6,7 +6,8 @@ import argparse
 import threading
 import webbrowser
 from functools import partial
-from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
+from http.server import ThreadingHTTPServer
+from ai_server import SanaHandler, load_env
 from pathlib import Path
 
 
@@ -22,7 +23,8 @@ def main() -> None:
     )
     args = parser.parse_args()
 
-    handler = partial(SimpleHTTPRequestHandler, directory=str(PROJECT_ROOT))
+    load_env()
+    handler = partial(SanaHandler, directory=str(PROJECT_ROOT))
     server = ThreadingHTTPServer(("127.0.0.1", 0), handler)
     address, port = server.server_address
     url = f"http://{address}:{port}/"
