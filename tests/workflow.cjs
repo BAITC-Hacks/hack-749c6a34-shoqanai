@@ -37,7 +37,7 @@ function boot(failStorage = false) {
     input(v) {values=v;handlers.input({target:{id:'field',closest:()=>node('form')}});},
     search(value) {handlers.input({target:{id:'search',value,closest:()=>null}});},
     change(extra) {const target={id:'',dataset:{},closest:()=>null,...extra};handlers.change({target});return target;},
-    submit(id,v,extra={}) {values=v;handlers.submit({preventDefault(){},target:{id,classList:{contains:()=>false},...extra}});},
+    submit(id,v,extra={},intent='save') {values=v;handlers.submit({preventDefault(){},submitter:{value:intent},target:{id,classList:{contains:()=>false},...extra}});},
     key(key){handlers.keydown({key});}
   };
 }
@@ -118,10 +118,38 @@ app.click('role',{role:'student'});
 app.change({id:'header-team',value:'team-2'});
 assert(app.node('app').innerHTML.includes('Approach 2')&&!app.node('app').innerHTML.includes('Approach 1'),'Team switch scopes student responses');
 assert(!app.node('app').innerHTML.includes('data-page="builder"'),'Student navigation hides business creation');
+app.click('project',{id:'compare-1'});
+assert(!app.node('app').innerHTML.includes('id="project-stage-form"'),'Other teams cannot open project editor');
+app.change({id:'header-team',value:'team-1'});
+app.click('project',{id:'compare-1'});
+const stageForm=i=>({dataset:{id:'compare-1',stage:String(i)}});
+app.submit('project-stage-form',{due:'2026-10-01',result:'Согласовали требования'},stageForm(0));
+assert(saved().proposals.find(p=>p.id==='compare-1').projectSteps[0].result==='Согласовали требования','Team saves project result');
+app.submit('project-stage-form',{due:'2026-10-01',result:'Согласовали требования'},stageForm(0),'accept');
+assert(!saved().proposals.find(p=>p.id==='compare-1').projectSteps[0].accepted,'Student cannot approve own stage');
+app=boot();app.click('project',{id:'compare-1'});
+assert(app.node('app').innerHTML.includes('Согласовали требования'),'Project draft survives reload');
+app.submit('project-stage-form',{due:'2026-10-01',result:'Too early'},stageForm(2),'accept');
+assert(!saved().proposals.find(p=>p.id==='compare-1').projectSteps[2].accepted,'Future stage is locked');
+app.submit('project-stage-form',{due:'2026-02-30',result:'Invalid date'},stageForm(0),'accept');
+assert(!saved().proposals.find(p=>p.id==='compare-1').projectSteps[0].accepted,'Impossible date is rejected');
+app.submit('project-stage-form',{due:'2026-10-01',result:'  '},stageForm(0),'accept');
+assert(!saved().proposals.find(p=>p.id==='compare-1').projectSteps[0].accepted,'Empty result cannot be approved');
+for(let i=0;i<4;i++)app.submit('project-stage-form',{due:'2026-10-01',result:'Результат '+i},stageForm(i),'accept');
+let completed=saved().proposals.find(p=>p.id==='compare-1');
+assert(completed.projectSteps.every(s=>s.accepted)&&completed.points===50,'Four stages complete project and award 50 points');
+app.submit('project-stage-form',{due:'2026-10-01',result:'Duplicate'},stageForm(3),'accept');
+assert(saved().proposals.find(p=>p.id==='compare-1').evidence==='Результат 3','Completed stage cannot be rewritten');
+app=boot();app.click('project',{id:'compare-1'});
+assert(app.node('app').innerHTML.includes('Проект завершён'),'Completed project survives reload');
+// A milestone accepted in an older version must not be rewarded again.
+app.click('project',{id:proposalId});
+for(let i=0;i<4;i++)app.submit('project-stage-form',{due:'2026-10-01',result:'Legacy '+i},{dataset:{id:proposalId,stage:String(i)}},'accept');
+assert(saved().proposals.find(p=>p.id===proposalId).points===50,'Legacy milestone points are preserved without duplication');
 app = boot(true);
 app.click('new');app.input({draft:'Черновик при недоступном хранилище'});
 assert(app.node('draft-save-status').textContent.includes('Не удалось сохранить'),'Storage failure is shown honestly');
-console.log('PASS: autosave, reload, publication, favorites, search, menu, workflow, filter chips, comparison guards, manual selection, status filters, team switching, storage failure.');
+console.log('PASS: autosave, reload, publication, favorites, search, menu, workflow, filters, comparison, team switching, project stages, approval guards, legacy points, storage failure.');
 async function testChat() {
   app = boot();
   app.context.SanaAI = {ask:async()=>({source:'openai',message:'Совет <script>test</script>',questions:[]})};

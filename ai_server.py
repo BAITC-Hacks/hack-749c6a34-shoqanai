@@ -109,7 +109,7 @@ def generate(payload):
 
 class SanaHandler(SimpleHTTPRequestHandler):
     # Explicit allowlist prevents .env, .git, Python source, and symlink disclosure.
-    PUBLIC = {'index.html', 'styles.css', 'theme.css', 'responsive.css', 'experience.css', 'favicon.svg',
+    PUBLIC = {'index.html', 'styles.css', 'theme.css', 'responsive.css', 'experience.css', 'projects.css', 'favicon.svg',
               'app.js', 'domain.js', 'data.js', 'ai-client.js', 'tests.html'}
 
     def json_reply(self, code, data):

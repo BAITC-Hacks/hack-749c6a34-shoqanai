@@ -44,6 +44,7 @@ class AITests(unittest.TestCase):
         self.assertEqual(self.fetch('/')[0], 200)
         self.assertEqual(self.fetch('/ai-client.js')[0], 200)
         self.assertEqual(self.fetch('/experience.css')[0], 200)
+        self.assertEqual(self.fetch('/projects.css')[0], 200)
 
     def test_private_files_blocked(self):
         for path in ('/.env', '/.git/config', '/ai_server.py', '/%2eenv', '/foo/../.env', '/docs/', '/.env.example'):
