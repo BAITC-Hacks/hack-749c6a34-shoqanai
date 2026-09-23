@@ -8,7 +8,7 @@ let nextId = 0;
 function assert(value, message) { if (!value) throw Error(message); }
 function boot(failStorage = false) {
   const handlers = {}, nodes = {}, classes = new Set();
-  const node = id => nodes[id] ||= {innerHTML:'', textContent:'', value:'', attrs:{}, focus(){}, setAttribute(k,v){this.attrs[k]=v;}, classList:{add(){},remove(){}}};
+  const node = id => nodes[id] ||= {innerHTML:'', textContent:'', value:'', attrs:{}, focus(){}, scrollIntoView(){}, setAttribute(k,v){this.attrs[k]=v;}, classList:{add(){},remove(){}}};
   node('sidebar').classList = {toggle(k){if(classes.has(k)){classes.delete(k);return false;}classes.add(k);return true;},remove:k=>classes.delete(k)};
   let values = {};
   const document = {
@@ -36,6 +36,7 @@ function boot(failStorage = false) {
     click(action, extra={}) {handlers.click({target:{closest:()=>Object.assign(node('clicked'),{dataset:{action,...extra}})}});},
     input(v) {values=v;handlers.input({target:{id:'field',closest:()=>node('form')}});},
     search(value) {handlers.input({target:{id:'search',value,closest:()=>null}});},
+    change(extra) {const target={id:'',dataset:{},closest:()=>null,...extra};handlers.change({target});return target;},
     submit(id,v,extra={}) {values=v;handlers.submit({preventDefault(){},target:{id,classList:{contains:()=>false},...extra}});},
     key(key){handlers.keydown({key});}
   };
@@ -88,7 +89,36 @@ app.click('role',{role:'business'});
 app.click('select',{id:proposalId});
 app.submit('progress',{evidence:'Результат проверен'},{dataset:{id:proposalId},classList:{contains:n=>n==='progress-form'}});
 assert(saved().proposals.at(-1).points===50,'Full workflow awards verified milestone points');
+// Multiple approaches to one task, plus an unrelated task, exercise comparison guards.
+const fixture = saved();
+const base = fixture.proposals[0];
+for(let i=1;i<=3;i++) fixture.proposals.push({...base,id:'compare-'+i,teamId:'team-'+i,idea:'Approach '+i});
+store['aisana-hub-v1']=JSON.stringify(fixture);
+app=boot();
+app.search('<script>');
+assert(app.node('active-filters').innerHTML.includes('&lt;script&gt;'),'Search chips escape user input');
+app.click('remove-filter',{filter:'search'});
+assert(app.node('active-filters').innerHTML==='','Individual search filter clears');
+app.click('nav',{page:'responses'});
+app.change({dataset:{compare:base.id},checked:true});
+assert(!app.change({dataset:{compare:fixture.proposals[1].id},checked:true}).checked,'Different tasks cannot be compared');
+app.change({dataset:{compare:'compare-1'},checked:true});
+app.change({dataset:{compare:'compare-2'},checked:true});
+assert(!app.change({dataset:{compare:'compare-3'},checked:true}).checked,'Comparison is limited to three');
+app.click('compare');
+assert(app.node('app').innerHTML.includes('<table class="comparison-table">'),'Comparison table opens');
+assert(saved().proposals[0].status==='pending','Comparing does not select a team');
+app.click('select',{id:'compare-1'});
+assert(saved().proposals.find(p=>p.id==='compare-1').status==='selected','Manual decision works from comparison');
+app.change({id:'response-task',value:base.taskId});
+assert(!app.node('app').innerHTML.includes('<table class="comparison-table">'),'Task change clears comparison');
+app.click('response-status',{status:'selected'});
+assert(app.node('app').innerHTML.includes('Approach 1')&&!app.node('app').innerHTML.includes('Approach 2'),'Status filter shows selected responses only');
+app.click('role',{role:'student'});
+app.change({id:'header-team',value:'team-2'});
+assert(app.node('app').innerHTML.includes('Approach 2')&&!app.node('app').innerHTML.includes('Approach 1'),'Team switch scopes student responses');
+assert(!app.node('app').innerHTML.includes('data-page="builder"'),'Student navigation hides business creation');
 app = boot(true);
 app.click('new');app.input({draft:'Черновик при недоступном хранилище'});
 assert(app.node('draft-save-status').textContent.includes('Не удалось сохранить'),'Storage failure is shown honestly');
-console.log('PASS: autosave, reload, multiple drafts, publication, edit isolation, favorites, search, menu, full workflow, storage failure.');
+console.log('PASS: autosave, reload, publication, favorites, search, menu, workflow, filter chips, comparison guards, manual selection, status filters, team switching, storage failure.');
