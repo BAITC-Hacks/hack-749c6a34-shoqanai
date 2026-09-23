@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="AI Sana Challenge Hub — от бизнес-задачи к студенческому решению.">
+  <title>AI Sana — Challenge Hub</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="app.js" defer></script>
+</head>
+<body>
+  <header class="header container">
+    <a class="brand" href="#" aria-label="AI Sana — главная"><span class="brand-icon">✳</span><span>AI Sana<span class="brand-dot">.</span><small>CHALLENGE HUB</small></span></a>
+    <nav aria-label="Навигация"><a href="#about">Как это работает</a><a href="#idea" class="nav-cta">Начать с идеи ↗</a></nav>
+  </header>
+
+  <main class="container">
+    <section class="hero">
+      <div class="hero-content">
+        <p class="eyebrow">БИЗНЕС + СТУДЕНЧЕСКИЕ КОМАНДЫ</p>
+        <h1>Ваша задача.<br>Их талант.<br><span>Общий результат.</span></h1>
+        <p class="hero-text">Место, где реальные вызовы бизнеса становятся практическими проектами для студентов.</p>
+        <a href="#idea" class="button">Сформулировать задачу <span>↗</span></a>
+        <p class="hero-note">Большие решения начинаются с понятной идеи.</p>
+      </div>
+      <div class="hero-art" aria-hidden="true"><div class="orbit orbit-outer"></div><div class="orbit orbit-inner"></div><span class="spark">✳</span><div class="floating-card first"><span class="check">✓</span><div>Есть идея?<strong>Давайте её проясним.</strong></div></div><div class="floating-card second"><span>↗</span><div>Бизнес + студенты<strong>Вместе — больше.</strong></div></div></div>
+    </section>
+
+    <section id="about" class="how-section">
+      <div class="section-heading"><div><p class="eyebrow dark">ОТ ПОТРЕБНОСТИ К ПРОЕКТУ</p><h2>Понятный путь к сотрудничеству</h2></div><p>Два разных взгляда.<br>Одна общая цель.</p></div>
+      <div class="steps">
+        <article class="step"><span class="step-number">01</span><h3>Бизнес описывает задачу</h3><p>Рассказывает о проблеме, ожидаемом результате и доступных материалах.</p><span class="tag">Реальный вызов</span></article>
+        <article class="step"><span class="step-number">02</span><h3>Помощник уточняет детали</h3><p>В планируемом MVP AI задаст вопросы и поможет подготовить карточку задачи.</p><span class="tag">Понятные условия</span></article>
+        <article class="step"><span class="step-number">03</span><h3>Команды предлагают решения</h3><p>Студенты выбирают интересные проекты, а бизнес самостоятельно выбирает команду.</p><span class="tag">Осознанный выбор</span></article>
+      </div>
+    </section>
+
+    <section id="idea" class="idea-section">
+      <div class="idea-copy"><p class="eyebrow dark">ПЕРВЫЙ ШАГ</p><h2>Начните<br>своими словами.</h2><p>Что отнимает время, мешает расти или требует нового взгляда? Для начала достаточно короткого описания.</p><div class="stage-note"><span>✳</span><p><strong>Начальная версия проекта</strong><br>Пока можно сохранить идею в этом браузере. AI-помощник, рейтинг и каталог появятся на следующих этапах.</p></div></div>
+      <form id="idea-form" class="idea-form">
+        <label for="task-title">Название идеи</label><input id="task-title" name="title" maxlength="120" required placeholder="Например, помощник преподавателя">
+        <label for="task-description">Какую проблему хотите решить?</label><textarea id="task-description" name="description" rows="5" minlength="10" maxlength="3000" required placeholder="Преподаватели нашей школы тратят много времени на проверку домашних заданий…"></textarea>
+        <p class="field-hint">От 10 до 3000 символов. Не добавляйте конфиденциальные данные.</p>
+        <button type="submit" class="button dark-button">Сохранить идею <span>↗</span></button>
+        <p id="form-status" role="status" aria-live="polite"></p>
+      </form>
+    </section>
+  </main>
+  <footer class="container footer"><span>AI Sana · ShoqanAI</span><span>HackAlemAI / Образовательный трек</span><span>Начало большого проекта ↗</span></footer>
+</body>
+</html>
