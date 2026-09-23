@@ -1,6 +1,7 @@
 """Local OpenAI adapter. Standard library only; never serves server files or secrets."""
 import json
 import os
+import re
 import threading
 import time
 import urllib.request
@@ -14,6 +15,7 @@ QUESTION_FIELDS = FIELDS + ['contact']
 SLOTS = threading.BoundedSemaphore(2)
 RATE_LOCK = threading.Lock()
 REQUEST_TIMES = []
+LEADING_QUESTION = re.compile(r'(?:^|\s)(?:не так ли|верно ли|правильно ли|не лучше ли|вам ведь|не хотите ли|подходит ли вам|например[:,])', re.IGNORECASE)
 PROMPT = """Ты Sana, помощник платформы бизнес-задач и студенческих команд AI Sana.
 Отвечай по-русски кратко и конкретно. Помогай уточнить потребность, пользователей,
 данные, ограничения, ожидаемый результат и измеримые критерии успеха.
@@ -23,8 +25,9 @@ PROMPT = """Ты Sana, помощник платформы бизнес-зада
 Не выбирай команды и не обещай изменение рейтинга или публикацию: это действия человека.
 Рейтинг: контекст+потребность 20, данные 20, результат 15, критерии 15,
 ограничения 10, пользователи 10, контакт+взаимодействие 10. Только подтверждённые поля.
-При mode=questions найди пробелы в описании и задай 3–9 разных уместных вопросов.
-Вопрос связывай с одним допустимым полем. Даже в полном описании уточни 3 неоднозначности.
+При mode=questions задай ровно 3 коротких открытых вопроса по самым значимым пробелам.
+Учитывай уже сообщённые факты и не спрашивай их повторно. Формулируй нейтрально: не предлагай варианты ответа, не подталкивай к конкретному решению и не начинай с «не так ли», «правильно ли» или «вам нужно». Каждый вопрос связывай с одним допустимым полем.
+Если описание подробное, спроси о проверке результата, пользователях или ограничениях, не повторяя заполненные поля.
 При mode=chat ответь на вопрос о задаче или платформе; можно добавить до 3 вопросов.
 Нерелевантные запросы вежливо возвращай к оформлению бизнес-задач и студенческой практике.
 Возвращай JSON с message и questions. Не включай HTML."""
@@ -77,12 +80,12 @@ def validate_output(value, mode):
     if not isinstance(value, dict) or not isinstance(value.get('message'), str) or not 1 <= len(value['message'].strip()) <= 6000:
         raise ValueError('Некорректный ответ модели.')
     qs = value.get('questions')
-    minimum, maximum = (3, 9) if mode == 'questions' else (0, 3)
+    minimum, maximum = (3, 3) if mode == 'questions' else (0, 3)
     if not isinstance(qs, list) or not minimum <= len(qs) <= maximum:
         raise ValueError('Некорректное число вопросов.')
     seen = set()
     for q in qs:
-        if not isinstance(q, dict) or q.get('field') not in QUESTION_FIELDS or q['field'] in seen or not isinstance(q.get('question'), str) or not 1 <= len(q['question'].strip()) <= 700:
+        if not isinstance(q, dict) or q.get('field') not in QUESTION_FIELDS or q['field'] in seen or not isinstance(q.get('question'), str) or not 1 <= len(q['question'].strip()) <= 700 or LEADING_QUESTION.search(q['question']):
             raise ValueError('Некорректный вопрос модели.')
         seen.add(q['field'])
     return {'message': value['message'].strip(), 'questions': qs, 'source': 'openai'}
