@@ -18,5 +18,10 @@ test('HTTPS ссылка принимается',()=>eq(Hub.safeUrl('https://exa
 test('Баллы только за выбранную команду',()=>{let rejected=false;try{Hub.approveProgress(seed.proposals[0],'Прототип проверен');}catch{rejected=true;}eq(rejected,true);});
 test('Принятый этап приносит 50 баллов без повторного начисления',()=>{const p=Hub.approveProgress({...seed.proposals[0],status:'selected'},'Проверен прототип');eq(p.points,50);let rejected=false;try{Hub.approveProgress(p,'Ещё раз');}catch{rejected=true;}eq(rejected,true);});
 test('В наборе есть задача с низким рейтингом, доступная в каталоге',()=>eq(seed.tasks.some(t=>t.published&&Hub.score(t)<40),true));
+test('Поиск игнорирует регистр, лишние пробелы и различие е/ё',()=>eq(Hub.filterTasks([{...seed.tasks[0],title:'Учёт материалов'}],{search:'  УЧЕТ   материалов '}).length,1));
+test('Слова поиска могут находиться в разных полях',()=>eq(Hub.filterTasks([{...seed.tasks[0],title:'Прогноз',company:'Кофейня'}],{search:'кофейня прогноз'}).length,1));
+test('Избранное не меняет общий каталог',()=>{eq(Hub.filterTasks(seed.tasks,{onlyFavorites:true},['task-0']).length,1);eq(Hub.filterTasks(seed.tasks,{},['task-0']).length,seed.tasks.length);});
+test('Неопубликованные задачи не попадают в поиск',()=>eq(Hub.filterTasks([{...seed.tasks[0],published:false}],{}).length,0));
+test('Поиск сохраняет сортировку по рейтингу',()=>{const result=Hub.filterTasks([...seed.tasks].reverse(),{});eq(result.length,seed.tasks.length);eq(result.every((t,i)=>i===0||Hub.score(result[i-1])>=Hub.score(t)),true);});
 document.querySelector('#summary').textContent=passed+' пройдено, '+failed+' ошибок';document.title=failed?'FAIL':'PASS '+passed;
 </script></html>

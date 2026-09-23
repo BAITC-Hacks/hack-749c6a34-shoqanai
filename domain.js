@@ -13,5 +13,10 @@ globalThis.Hub = (() => {
  function confirm(t) {return {...t,confirmed:fields.filter(f=>present(t[f[0]])).map(f=>f[0])};}
  function safeUrl(s){try {const u=new URL(s);return ['http:','https:'].includes(u.protocol)?u.href:null;}catch{return null;}}
  function approveProgress(p,evidence){if(p.status!=='selected'||p.completed||!present(evidence))throw Error('Этап недоступен для подтверждения');return {...p,completed:true,evidence:evidence.trim(),points:50};}
- return {fields,groups,score,breakdown,level,prompt,assistant,validateAssistant,confirm,safeUrl,approveProgress};
+ function filterTasks(tasks, filters={}, favorites=[]) {
+  const normalize=value=>String(value??'').toLocaleLowerCase('ru').replace(/ё/g,'е');
+  const words=normalize(filters.search).trim().split(/\s+/).filter(Boolean);
+  return tasks.filter(t=>t.published && (!filters.topic||t.topic===filters.topic) && (!filters.level||level(score(t))===filters.level) && (!filters.onlyFavorites||favorites.includes(t.id)) && words.every(word=>normalize([t.title,t.company,t.topic,t.context,t.need,t.result,t.users,t.data].join(' ')).includes(word))).sort((a,b)=>score(b)-score(a)||b.created-a.created);
+ }
+ return {fields,groups,score,breakdown,level,prompt,assistant,validateAssistant,confirm,safeUrl,approveProgress,filterTasks};
 })();

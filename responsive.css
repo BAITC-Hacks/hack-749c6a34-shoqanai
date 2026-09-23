@@ -1,4 +1,16 @@
 /* Layout enhancements. Keep controls usable at 320px and at browser zoom. */
+.card-tools { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.favorite-btn { border: 1px solid var(--line); border-radius: 9px; min-width: 44px; min-height: 44px; background: white; color: var(--green); font-size: 25px; }
+.favorite-btn[aria-pressed="true"] { background: #edf5df; border-color: #94b669; }
+.catalog-toolbar, .resume-banner { display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; margin-bottom: 18px; }
+.catalog-toolbar > span { color: var(--muted); font-size: 13px; }
+.catalog-toolbar .btn[aria-pressed="true"] { background: #eaf3df; border-color: #94b669; }
+.resume-banner { padding: 20px; background: #edf4e5; border: 1px solid #dce8ce; border-radius: 12px; }
+.resume-banner p { margin: 6px 0 0; color: var(--muted); font-size: 13px; }
+.save-status { color: var(--green); font-size: 13px; margin-bottom: 20px; }
+.draft-card { display: flex; flex-direction: column; margin: 0; }
+.draft-card h3 { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.draft-card > .btn { margin-top: auto; }
 :root {
   --muted: #626f66;
   --page-gutter: clamp(16px, 3vw, 44px);
