@@ -802,3 +802,37 @@ summary {
 .full {
   grid-column:1/-1
 }
+
+/* Subtle motion keeps the catalog lively without making reading harder. */
+@keyframes content-arrive {
+  from { opacity:0; transform:translateY(9px); }
+  to { opacity:1; transform:translateY(0); }
+}
+@keyframes card-arrive {
+  from { opacity:0; transform:translateY(12px) scale(.99); }
+  to { opacity:1; transform:translateY(0) scale(1); }
+}
+@keyframes orbit-drift {
+  from { transform:rotate(0deg); }
+  to { transform:rotate(360deg); }
+}
+@keyframes gentle-float {
+  0%,100% { transform:translateY(0); }
+  50% { transform:translateY(-7px); }
+}
+.content { animation:content-arrive .42s ease both; }
+.task-card { animation:card-arrive .48s cubic-bezier(.2,.7,.25,1) both; }
+.task-card:nth-child(3n + 2) { animation-delay:55ms; }
+.task-card:nth-child(3n) { animation-delay:100ms; }
+.task-card:hover { transform:translateY(-5px); box-shadow:0 15px 34px #203f3014; }
+.bar i { transition:width .75s cubic-bezier(.2,.7,.25,1); }
+.orbit { animation:orbit-drift 38s linear infinite; }
+.orbit.two { animation-direction:reverse; animation-duration:52s; }
+.spark,.float-tag { animation:gentle-float 3.8s ease-in-out infinite; }
+.float-tag { animation-delay:-1.4s; }
+.btn,.text-btn,.nav button,.role-switch button { transition:transform .18s ease,background-color .18s ease,box-shadow .18s ease; }
+.btn:active,.text-btn:active { transform:scale(.97); }
+@media (prefers-reduced-motion:reduce) {
+  .content,.task-card,.orbit,.spark,.float-tag { animation:none !important; }
+  .btn,.text-btn,.nav button,.role-switch button,.task-card,.bar i { transition:none !important; }
+}
